@@ -1,5 +1,6 @@
 import axios from "axios";
-import { type AIRouteRequest, type Route, type Waypoint } from "@shared/schema";
+import { type AIRouteRequest, type Route, type Waypoint, type InsertRoutePlan } from "@shared/schema";
+import { storage } from "./storage";
 
 // DeepSeek API configuration
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-dummy-key-for-development";
@@ -16,7 +17,7 @@ export async function generateRoutePlan(request: AIRouteRequest): Promise<{
     // If API key is not set, return a fallback response for development
     if (!process.env.DEEPSEEK_API_KEY) {
       console.warn("DeepSeek API key not provided. Using fallback response.");
-      return getFallbackRoutePlan(request);
+      return await getFallbackRoutePlan(request);
     }
 
     // Create a detailed prompt for DeepSeek
@@ -53,7 +54,7 @@ export async function generateRoutePlan(request: AIRouteRequest): Promise<{
     const parsedResponse = JSON.parse(content);
 
     // Transform the response into our application format
-    return {
+    const routeResult = {
       route: {
         distance: parsedResponse.route.totalDistance,
         duration: parsedResponse.route.estimatedDuration,
@@ -67,13 +68,31 @@ export async function generateRoutePlan(request: AIRouteRequest): Promise<{
       },
       recommendations: parsedResponse.recommendations
     };
+
+    // Store in the database
+    try {
+      const routePlan: InsertRoutePlan = {
+        prompt: request.prompt,
+        route: JSON.stringify(routeResult.route),
+        recommendations: routeResult.recommendations,
+        taskId: null
+      };
+      
+      await storage.createRoutePlan(routePlan);
+      console.log("Route plan stored successfully in the database");
+    } catch (dbError) {
+      console.error("Error storing route plan in database:", dbError);
+      // Continue with the response even if database storage fails
+    }
+
+    return routeResult;
   } catch (err: any) {
     console.error("Error generating route plan with DeepSeek:", err);
     
     // Return a fallback if there's an API error
     if (err.response && err.response.status >= 400) {
       console.warn(`DeepSeek API error (${err.response.status}). Using fallback response.`);
-      return getFallbackRoutePlan(request);
+      return await getFallbackRoutePlan(request);
     }
     
     throw new Error(`Failed to generate route plan: ${err.message}`);
@@ -172,10 +191,10 @@ function generateSVGPath(waypoints: any[]): string {
 /**
  * Provides a fallback route plan when the DeepSeek API key is not available
  */
-function getFallbackRoutePlan(request: AIRouteRequest): {
+async function getFallbackRoutePlan(request: AIRouteRequest): Promise<{
   route: Route;
   recommendations: string;
-} {
+}> {
   // Create a reasonable fallback based on the request
   const waypoints: Waypoint[] = [
     {
@@ -213,7 +232,7 @@ function getFallbackRoutePlan(request: AIRouteRequest): {
   // Create an SVG path for visualization
   const path = "M100,250 C150,150 250,100 350,200 S450,300 550,250 S650,100 750,180";
 
-  return {
+  const routeResult = {
     route: {
       distance: "4.2 km",
       duration: "36 minutes",
@@ -222,4 +241,22 @@ function getFallbackRoutePlan(request: AIRouteRequest): {
     },
     recommendations: `Based on the request "${request.prompt}", we recommend deploying during the morning hours (7-10 AM) for optimal lighting conditions. Use drone model DJI-422 with the higher capacity battery for this mission. Consider capturing both RGB and thermal imagery to identify water ingress in structures.`
   };
+
+  // Store in the database
+  try {
+    const routePlan: InsertRoutePlan = {
+      prompt: request.prompt,
+      route: JSON.stringify(routeResult.route),
+      recommendations: routeResult.recommendations,
+      taskId: null
+    };
+    
+    await storage.createRoutePlan(routePlan);
+    console.log("Fallback route plan stored successfully in the database");
+  } catch (dbError) {
+    console.error("Error storing fallback route plan in database:", dbError);
+    // Continue with the response even if database storage fails
+  }
+
+  return routeResult;
 }
