@@ -1,11 +1,12 @@
-import OpenAI from "openai";
+import axios from "axios";
 import { type AIRouteRequest, type Route, type Waypoint } from "@shared/schema";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "sk-dummy-key-for-development" });
+// DeepSeek API configuration
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-dummy-key-for-development";
+const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 /**
- * Generates a route plan using OpenAI based on the user's request
+ * Generates a route plan using DeepSeek based on the user's request
  */
 export async function generateRoutePlan(request: AIRouteRequest): Promise<{
   route: Route;
@@ -13,33 +14,42 @@ export async function generateRoutePlan(request: AIRouteRequest): Promise<{
 }> {
   try {
     // If API key is not set, return a fallback response for development
-    if (!process.env.OPENAI_API_KEY) {
-      console.warn("OpenAI API key not provided. Using fallback response.");
+    if (!process.env.DEEPSEEK_API_KEY) {
+      console.warn("DeepSeek API key not provided. Using fallback response.");
       return getFallbackRoutePlan(request);
     }
 
-    // Create a detailed prompt for OpenAI
+    // Create a detailed prompt for DeepSeek
     const promptText = createPrompt(request);
 
-    // Call OpenAI API for route planning
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { 
-          role: "system", 
-          content: "You are an expert drone route planner with knowledge of spatial planning, flight paths, and optimized routing algorithms. Provide route details in a structured JSON format." 
-        },
-        { 
-          role: "user", 
-          content: promptText 
+    // Call DeepSeek API for route planning
+    const response = await axios.post(
+      DEEPSEEK_API_URL,
+      {
+        model: "deepseek-coder", // Using DeepSeek's model for structured outputs
+        messages: [
+          { 
+            role: "system", 
+            content: "You are an expert drone route planner with knowledge of spatial planning, flight paths, and optimized routing algorithms. Provide route details in a structured JSON format." 
+          },
+          { 
+            role: "user", 
+            content: promptText 
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
         }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-    });
+      }
+    );
 
     // Parse the response
-    const content = response.choices[0].message.content;
+    const content = response.data.choices[0].message.content;
     const parsedResponse = JSON.parse(content);
 
     // Transform the response into our application format
@@ -57,14 +67,21 @@ export async function generateRoutePlan(request: AIRouteRequest): Promise<{
       },
       recommendations: parsedResponse.recommendations
     };
-  } catch (error) {
-    console.error("Error generating route plan with OpenAI:", error);
-    throw new Error(`Failed to generate route plan: ${error.message}`);
+  } catch (err: any) {
+    console.error("Error generating route plan with DeepSeek:", err);
+    
+    // Return a fallback if there's an API error
+    if (err.response && err.response.status >= 400) {
+      console.warn(`DeepSeek API error (${err.response.status}). Using fallback response.`);
+      return getFallbackRoutePlan(request);
+    }
+    
+    throw new Error(`Failed to generate route plan: ${err.message}`);
   }
 }
 
 /**
- * Creates a detailed prompt for OpenAI based on the user's request
+ * Creates a detailed prompt for DeepSeek based on the user's request
  */
 function createPrompt(request: AIRouteRequest): string {
   // Extract constraints from the request
@@ -153,7 +170,7 @@ function generateSVGPath(waypoints: any[]): string {
 }
 
 /**
- * Provides a fallback route plan when the OpenAI API key is not available
+ * Provides a fallback route plan when the DeepSeek API key is not available
  */
 function getFallbackRoutePlan(request: AIRouteRequest): {
   route: Route;
