@@ -1,4 +1,5 @@
-import { pgTable, text, serial, integer, boolean, timestamp, type } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, pgEnum } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -14,6 +15,21 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+// Define task status and priority enums for PostgreSQL
+export const pgTaskStatusEnum = pgEnum('task_status', [
+  'pending', 
+  'in_progress', 
+  'completed', 
+  'cancelled', 
+  'on_hold'
+]);
+
+export const pgTaskPriorityEnum = pgEnum('task_priority', [
+  'low', 
+  'medium', 
+  'high'
+]);
+
 // Task schema for Vigora Core
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
@@ -22,8 +38,8 @@ export const tasks = pgTable("tasks", {
   latitude: text("latitude").notNull(),
   longitude: text("longitude").notNull(),
   duration: integer("duration").notNull(), // duration in minutes
-  status: text("status").notNull().default("pending"), // pending, in_progress, completed, cancelled, on_hold
-  priority: text("priority").notNull().default("medium"), // low, medium, high
+  status: pgTaskStatusEnum("status").notNull().default("pending"),
+  priority: pgTaskPriorityEnum("priority").notNull().default("medium"),
   assignedTo: text("assigned_to"), // drone identifier
   createdAt: timestamp("created_at").defaultNow(),
 });
