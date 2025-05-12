@@ -64,9 +64,10 @@ export default function TrackSimulation({ map, selectedDrone }: TrackSimulationP
         <path 
           d="M100,400 C150,350 250,300 350,320 S450,380 550,350" 
           fill="none" 
-          stroke="#3b82f6" 
-          strokeWidth="3" 
-          strokeOpacity="0.7" 
+          stroke="#22d3ee" 
+          strokeWidth="4" 
+          strokeOpacity="0.85"
+          filter="drop-shadow(0 0 3px rgba(34, 211, 238, 0.5))"  
           className={isSimulating ? 'path' : ''}
         />
         
@@ -74,28 +75,33 @@ export default function TrackSimulation({ map, selectedDrone }: TrackSimulationP
         <path 
           d="M550,350 S650,300 780,320" 
           fill="none" 
-          stroke="#3b82f6" 
+          stroke="#22d3ee" 
           strokeWidth="3" 
-          strokeOpacity="0.4" 
-          strokeDasharray="5,5" 
+          strokeOpacity="0.6" 
+          strokeDasharray="5,5"
+          filter="drop-shadow(0 0 2px rgba(34, 211, 238, 0.3))" 
         />
         
         {/* Direction indicators */}
         <path 
           d="M100,400 C150,350 250,300 350,320 S450,380 550,350" 
           fill="none" 
-          stroke="#3b82f6" 
+          stroke="#22d3ee" 
           strokeWidth="1" 
           strokeOpacity="0" 
           markerEnd="url(#arrowhead)" 
         />
         
         {/* Waypoints */}
-        <circle cx="100" cy="400" r="6" fill="#10b981" />
-        <circle cx="250" cy="300" r="4" fill="#f59e0b" />
-        <circle cx="450" cy="380" r="4" fill="#f59e0b" />
-        <circle cx="650" cy="300" r="4" fill="#f59e0b" />
-        <circle cx="780" cy="320" r="6" fill="#ef4444" />
+        <circle cx="100" cy="400" r="8" fill="#10b981" stroke="#ffffff" strokeWidth="2" filter="drop-shadow(0 0 4px rgba(16, 185, 129, 0.7))" />
+        <circle cx="250" cy="300" r="6" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" filter="drop-shadow(0 0 3px rgba(245, 158, 11, 0.7))" />
+        <circle cx="450" cy="380" r="6" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" filter="drop-shadow(0 0 3px rgba(245, 158, 11, 0.7))" />
+        <circle cx="650" cy="300" r="6" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" filter="drop-shadow(0 0 3px rgba(245, 158, 11, 0.7))" />
+        <circle cx="780" cy="320" r="8" fill="#ef4444" stroke="#ffffff" strokeWidth="2" filter="drop-shadow(0 0 4px rgba(239, 68, 68, 0.7))" />
+        
+        {/* Waypoint labels */}
+        <text x="100" y="385" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" filter="drop-shadow(0 0 3px rgba(0, 0, 0, 0.8))">START</text>
+        <text x="780" y="305" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" filter="drop-shadow(0 0 3px rgba(0, 0, 0, 0.8))">END</text>
         
         {/* Current drone position */}
         {dronePosition && (
@@ -103,18 +109,21 @@ export default function TrackSimulation({ map, selectedDrone }: TrackSimulationP
             <circle 
               cx={progress > 0 ? 100 + (450 * progress) : 100} 
               cy={progress > 0 ? 400 - (50 * progress) : 400} 
-              r="8" 
-              fill="#3b82f6" 
+              r="10" 
+              fill="#06b6d4" 
+              stroke="white"
+              strokeWidth="2"
               className="animate-pulse" 
+              filter="drop-shadow(0 0 6px rgba(6, 182, 212, 0.8))"
             />
             <circle 
               cx={progress > 0 ? 100 + (450 * progress) : 100} 
               cy={progress > 0 ? 400 - (50 * progress) : 400} 
-              r="30" 
-              fill="#3b82f6" 
-              fillOpacity="0.1" 
-              stroke="#3b82f6" 
-              strokeWidth="1" 
+              r="40" 
+              fill="#06b6d4" 
+              fillOpacity="0.15" 
+              stroke="#06b6d4" 
+              strokeWidth="1.5" 
               strokeDasharray="3,3" 
             />
           </>
@@ -126,18 +135,29 @@ export default function TrackSimulation({ map, selectedDrone }: TrackSimulationP
           cy="200" 
           r="50" 
           fill="#ef4444" 
-          fillOpacity="0.15" 
+          fillOpacity="0.25" 
           stroke="#ef4444" 
-          strokeWidth="2" 
-          strokeDasharray="5,5" 
+          strokeWidth="3" 
+          strokeDasharray="5,5"
+          filter="drop-shadow(0 0 4px rgba(239, 68, 68, 0.5))" 
+        />
+        <path 
+          d="M370,170 L430,230 M430,170 L370,230" 
+          stroke="#ef4444" 
+          strokeWidth="3" 
+          strokeLinecap="round"
+          strokeOpacity="0.8"
+          filter="drop-shadow(0 0 2px rgba(239, 68, 68, 0.5))"
         />
         <text 
           x="400" 
-          y="200" 
+          y="245" 
           textAnchor="middle" 
           dominantBaseline="middle" 
-          fill="#ef4444" 
-          fontSize="10"
+          fill="white" 
+          fontSize="11"
+          fontWeight="bold"
+          filter="drop-shadow(0 0 3px rgba(0, 0, 0, 0.8))"
         >
           NO-FLY ZONE
         </text>
