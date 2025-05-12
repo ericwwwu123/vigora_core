@@ -217,12 +217,18 @@ export class DatabaseStorage implements IStorage {
   
   // Task methods
   async getTask(id: number): Promise<Task | undefined> {
+    // Using a simple query for now to ensure compatibility
     const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    
+    // In a future update, we could expand this to include related entities
+    // by using the relations we've established
     return task;
   }
   
   async getAllTasks(): Promise<Task[]> {
-    return await db.select().from(tasks);
+    return await db.select()
+      .from(tasks)
+      .orderBy(desc(tasks.createdAt));
   }
   
   async createTask(task: InsertTask): Promise<Task> {
@@ -268,7 +274,9 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getAllActivities(): Promise<Activity[]> {
-    return await db.select().from(activities);
+    return await db.select()
+      .from(activities)
+      .orderBy(desc(activities.createdAt));
   }
   
   async createActivity(activity: InsertActivity): Promise<Activity> {
@@ -318,7 +326,9 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getAllRoutePlans(): Promise<RoutePlan[]> {
-    return await db.select().from(routePlans);
+    return await db.select()
+      .from(routePlans)
+      .orderBy(desc(routePlans.createdAt));
   }
   
   async createRoutePlan(routePlan: InsertRoutePlan): Promise<RoutePlan> {
