@@ -5,6 +5,8 @@ import {
   drones, type Drone, type InsertDrone,
   routePlans, type RoutePlan, type InsertRoutePlan
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -192,4 +194,147 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+  
+  // Task methods
+  async getTask(id: number): Promise<Task | undefined> {
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return task;
+  }
+  
+  async getAllTasks(): Promise<Task[]> {
+    return await db.select().from(tasks);
+  }
+  
+  async createTask(task: InsertTask): Promise<Task> {
+    const now = new Date();
+    const taskToInsert = {
+      ...task,
+      createdAt: now,
+      status: task.status || "pending",
+      description: task.description || null,
+      priority: task.priority || "medium",
+      assignedTo: task.assignedTo || null
+    };
+    
+    const [newTask] = await db
+      .insert(tasks)
+      .values(taskToInsert)
+      .returning();
+    return newTask;
+  }
+  
+  async updateTask(id: number, taskUpdate: Partial<InsertTask>): Promise<Task> {
+    const [updatedTask] = await db
+      .update(tasks)
+      .set(taskUpdate)
+      .where(eq(tasks.id, id))
+      .returning();
+    
+    if (!updatedTask) {
+      throw new Error(`Task with id ${id} not found`);
+    }
+    
+    return updatedTask;
+  }
+  
+  async deleteTask(id: number): Promise<void> {
+    await db.delete(tasks).where(eq(tasks.id, id));
+  }
+  
+  // Activity methods
+  async getActivity(id: number): Promise<Activity | undefined> {
+    const [activity] = await db.select().from(activities).where(eq(activities.id, id));
+    return activity;
+  }
+  
+  async getAllActivities(): Promise<Activity[]> {
+    return await db.select().from(activities);
+  }
+  
+  async createActivity(activity: InsertActivity): Promise<Activity> {
+    const now = new Date();
+    const activityToInsert = {
+      ...activity,
+      createdAt: now,
+      status: activity.status || null,
+      relatedId: activity.relatedId || null
+    };
+    
+    const [newActivity] = await db
+      .insert(activities)
+      .values(activityToInsert)
+      .returning();
+    return newActivity;
+  }
+  
+  // Drone methods
+  async getDrone(id: number): Promise<Drone | undefined> {
+    const [drone] = await db.select().from(drones).where(eq(drones.id, id));
+    return drone;
+  }
+  
+  async getAllDrones(): Promise<Drone[]> {
+    return await db.select().from(drones);
+  }
+  
+  async createDrone(drone: InsertDrone): Promise<Drone> {
+    const droneToInsert = {
+      ...drone,
+      status: drone.status || "available",
+      batteryLevel: drone.batteryLevel || 100
+    };
+    
+    const [newDrone] = await db
+      .insert(drones)
+      .values(droneToInsert)
+      .returning();
+    return newDrone;
+  }
+  
+  // Route Plan methods
+  async getRoutePlan(id: number): Promise<RoutePlan | undefined> {
+    const [routePlan] = await db.select().from(routePlans).where(eq(routePlans.id, id));
+    return routePlan;
+  }
+  
+  async getAllRoutePlans(): Promise<RoutePlan[]> {
+    return await db.select().from(routePlans);
+  }
+  
+  async createRoutePlan(routePlan: InsertRoutePlan): Promise<RoutePlan> {
+    const now = new Date();
+    const routePlanToInsert = {
+      ...routePlan,
+      createdAt: now,
+      recommendations: routePlan.recommendations || null,
+      taskId: routePlan.taskId || null
+    };
+    
+    const [newRoutePlan] = await db
+      .insert(routePlans)
+      .values(routePlanToInsert)
+      .returning();
+    return newRoutePlan;
+  }
+}
+
+export const storage = new DatabaseStorage();
