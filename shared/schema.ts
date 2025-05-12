@@ -15,21 +15,6 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-// Define task status and priority enums for PostgreSQL
-export const pgTaskStatusEnum = pgEnum('task_status', [
-  'pending', 
-  'in_progress', 
-  'completed', 
-  'cancelled', 
-  'on_hold'
-]);
-
-export const pgTaskPriorityEnum = pgEnum('task_priority', [
-  'low', 
-  'medium', 
-  'high'
-]);
-
 // Task schema for Vigora Core
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
@@ -38,8 +23,8 @@ export const tasks = pgTable("tasks", {
   latitude: text("latitude").notNull(),
   longitude: text("longitude").notNull(),
   duration: integer("duration").notNull(), // duration in minutes
-  status: pgTaskStatusEnum("status").notNull().default("pending"),
-  priority: pgTaskPriorityEnum("priority").notNull().default("medium"),
+  status: text("status").notNull().default("pending"), // pending, in_progress, completed, cancelled, on_hold
+  priority: text("priority").notNull().default("medium"), // low, medium, high
   assignedTo: text("assigned_to"), // drone identifier
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -120,6 +105,38 @@ export type InsertRoutePlan = z.infer<typeof insertRoutePlanSchema>;
 
 export type Drone = typeof drones.$inferSelect;
 export type InsertDrone = z.infer<typeof insertDroneSchema>;
+
+// Define relations between tables
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  drone: one(drones, {
+    fields: [tasks.assignedTo],
+    references: [drones.identifier],
+  }),
+  activities: many(activities),
+  routePlan: one(routePlans, {
+    fields: [tasks.id],
+    references: [routePlans.taskId],
+  }),
+}));
+
+export const dronesRelations = relations(drones, ({ many }) => ({
+  tasks: many(tasks),
+}));
+
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  task: one(tasks, {
+    fields: [activities.relatedId],
+    references: [tasks.id],
+    relationName: 'task_activities',
+  }),
+}));
+
+export const routePlansRelations = relations(routePlans, ({ one }) => ({
+  task: one(tasks, {
+    fields: [routePlans.taskId],
+    references: [tasks.id],
+  }),
+}));
 
 // Zod schemas for validation
 export const taskStatusEnum = z.enum([

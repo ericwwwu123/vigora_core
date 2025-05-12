@@ -3,10 +3,11 @@ import {
   tasks, type Task, type InsertTask,
   activities, type Activity, type InsertActivity,
   drones, type Drone, type InsertDrone,
-  routePlans, type RoutePlan, type InsertRoutePlan
+  routePlans, type RoutePlan, type InsertRoutePlan,
+  tasksRelations, dronesRelations, activitiesRelations, routePlansRelations
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
