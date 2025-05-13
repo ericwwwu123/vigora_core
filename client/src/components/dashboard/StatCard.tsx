@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface StatCardProps {
   title: string;
@@ -29,22 +30,38 @@ export default function StatCard({ title, value, icon, trend, color }: StatCardP
   };
   
   return (
-    <Card className="bg-[#161a1d] shadow-lg p-6 border border-gray-800">
+    <Card className="bg-[#181c22] shadow-2xl p-8 border-0 rounded-2xl transition-transform hover:scale-[1.03]">
       <CardContent className="p-0">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-center">
           <div>
-            <p className="text-gray-400 text-sm">{title}</p>
-            <h3 className="text-3xl font-bold mt-1 text-white">{value}</h3>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-gray-400 text-base font-medium tracking-wide uppercase mb-2 cursor-help">{title}</p>
+              </TooltipTrigger>
+              <TooltipContent>{title} - Key Performance Indicator</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h3 className="text-5xl font-extrabold text-white animate-kpi-number transition-all duration-500 cursor-help">{value}</h3>
+              </TooltipTrigger>
+              <TooltipContent>{title} value</TooltipContent>
+            </Tooltip>
             {trend && (
-              <p className={`${trendColorMap[trend.direction]} text-sm mt-2 flex items-center`}>
+              <p className={`${trendColorMap[trend.direction]} text-base mt-3 flex items-center animate-kpi-trend transition-all duration-500`}>
                 <TrendIcon direction={trend.direction} />
-                <span className="ml-1">{trend.value} {trend.label}</span>
+                <span className="ml-1 font-semibold">{trend.value}</span>
+                <span className="ml-2 text-gray-400 font-normal">{trend.label}</span>
               </p>
             )}
           </div>
-          <div className={`rounded-full p-3 ${colorMap[color]}`}>
-            <StatIcon name={icon} />
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className={`rounded-full p-5 ${colorMap[color]} shadow-lg flex items-center justify-center transition-all duration-300 cursor-help`}> 
+                <StatIcon name={icon} />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>{title} icon</TooltipContent>
+          </Tooltip>
         </div>
       </CardContent>
     </Card>

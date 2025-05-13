@@ -2,28 +2,36 @@ import { useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { useMap, type MapWaypoint, type MapPath, type NoFlyZone } from '@/hooks/use-map';
 import { generateDemoRoute } from '@/lib/utils/mapUtils';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export default function MapView() {
   const mapRef = useRef<HTMLDivElement>(null);
   
   // Initialize map with demo route
-  const { waypoints, paths, noFlyZones, dronePosition } = generateDemoRoute();
+  const { waypoints, paths, noFlyZones } = generateDemoRoute();
   const mapHook = useMap({
     waypoints,
     paths,
-    noFlyZones,
-    dronePosition: {
-      latitude: "37.7752",
-      longitude: "-122.4180",
-      heading: 75,
-      altitude: 120,
-      speed: 7.2,
-      batteryLevel: 68
-    }
+    noFlyZones
   });
 
   return (
     <div ref={mapRef} className="h-full w-full relative">
+      {/* Subtle SVG grid background */}
+      <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#2d3748" strokeWidth="0.5" />
+            </pattern>
+            <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+              <rect width="100" height="100" fill="url(#smallGrid)" />
+              <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#4a5568" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+      </div>
       {/* Map background - high-contrast satellite imagery for better visibility */}
       <div 
         className="absolute inset-0 bg-cover bg-center" 
@@ -37,16 +45,16 @@ export default function MapView() {
       
       {/* SVG Overlay for paths and points */}
       <svg width="100%" height="100%" className="absolute inset-0">
-        {/* Render paths */}
+        {/* Render paths with animation */}
         {mapHook.paths.map((path, index) => (
           <path
             key={`path-${index}`}
             d={path.path}
             fill="none"
-            stroke="#60a5fa" // Brighter blue for better visibility
+            stroke="#60a5fa"
             strokeWidth="4"
             strokeDasharray={path.isDashed ? "5,5" : ""}
-            className={path.isAnimated ? "path" : ""}
+            className={path.isAnimated ? "path-animate" : ""}
             style={{
               strokeOpacity: path.isCompleted ? 1 : 0.8,
               filter: "drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5))"
@@ -157,7 +165,7 @@ export default function MapView() {
                   fontWeight="bold"
                   style={{ filter: "drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.8))" }}
                 >
-                  {`WP${waypoint.id.replace('wp', '')}`}
+                  {waypoint.type === 'waypoint' ? `Scan Zone ${waypoint.id.replace('wp', '')}` : waypoint.id}
                 </text>
               </>
             )}
@@ -233,15 +241,18 @@ export default function MapView() {
       
       {/* Map controls */}
       <div className="absolute top-4 right-4 flex flex-col space-y-2">
+        <Tooltip><TooltipTrigger asChild>
         <button className="bg-[#161a1d] p-2 rounded-md shadow-lg border border-gray-700 hover:bg-gray-800">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
+        </button></TooltipTrigger><TooltipContent>Zoom In</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild>
         <button className="bg-[#161a1d] p-2 rounded-md shadow-lg border border-gray-700 hover:bg-gray-800">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
+        </button></TooltipTrigger><TooltipContent>Zoom Out</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild>
         <button className="bg-[#161a1d] p-2 rounded-md shadow-lg border border-gray-700 hover:bg-gray-800">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><path d="M21 3L3 10.53v.98l6.84 2.65L12.48 21h.98L21 3z"></path></svg>
-        </button>
+        </button></TooltipTrigger><TooltipContent>Reset View</TooltipContent></Tooltip>
       </div>
       
       {/* Map legend */}
