@@ -45,198 +45,88 @@ export default function MapView() {
       
       {/* SVG Overlay for paths and points */}
       <svg width="100%" height="100%" className="absolute inset-0">
+        <defs>
+          <linearGradient id="pathGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#60a5fa" />
+            <stop offset="100%" stopColor="#2563eb" />
+          </linearGradient>
+          <radialGradient id="waypointGradient" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="1" />
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.7" />
+          </radialGradient>
+          <filter id="droneGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <g id="warningIcon">
+            <circle cx="6" cy="6" r="6" fill="#ef4444" />
+            <text x="6" y="10" textAnchor="middle" fontSize="10" fill="white" fontWeight="bold">!</text>
+          </g>
+          <g id="droneIcon">
+            <circle cx="0" cy="0" r="6" fill="#3b82f6" stroke="white" strokeWidth="2" />
+            <rect x="-2" y="-8" width="4" height="16" rx="2" fill="#60a5fa" />
+            <rect x="-8" y="-2" width="16" height="4" rx="2" fill="#60a5fa" />
+          </g>
+        </defs>
         {/* Render paths with animation */}
         {mapHook.paths.map((path, index) => (
           <path
             key={`path-${index}`}
             d={path.path}
             fill="none"
-            stroke="#60a5fa"
-            strokeWidth="4"
+            stroke="url(#pathGradient)"
+            strokeWidth="5"
             strokeDasharray={path.isDashed ? "5,5" : ""}
             className={path.isAnimated ? "path-animate" : ""}
             style={{
-              strokeOpacity: path.isCompleted ? 1 : 0.8,
-              filter: "drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5))"
+              strokeOpacity: path.isCompleted ? 1 : 0.85,
+              filter: "drop-shadow(0px 0px 6px #60a5fa)"
             }}
           />
         ))}
-        
         {/* Render waypoints */}
         {mapHook.waypoints.map((waypoint) => (
           <g key={waypoint.id}>
             {waypoint.type === 'start' && (
               <>
-                {/* Outer highlight for visibility */}
-                <circle
-                  cx="150"
-                  cy="250"
-                  r="14"
-                  fill="white"
-                  fillOpacity="0.5"
-                />
-                <circle
-                  cx="150"
-                  cy="250"
-                  r="10"
-                  fill="#10b981" // Success green
-                  stroke="white"
-                  strokeWidth="2"
-                />
-                <circle
-                  cx="150"
-                  cy="250"
-                  r="16"
-                  fill="#10b981"
-                  fillOpacity="0.3"
-                  className="animate-pulse"
-                />
-                {/* Label for better readability */}
-                <text
-                  x="150"
-                  y="280"
-                  textAnchor="middle"
-                  fill="white"
-                  fontSize="12"
-                  fontWeight="bold"
-                  style={{ filter: "drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.8))" }}
-                >
-                  START
-                </text>
+                <circle cx="150" cy="250" r="16" fill="url(#waypointGradient)" filter="url(#droneGlow)" />
+                <circle cx="150" cy="250" r="10" fill="#10b981" stroke="white" strokeWidth="2" />
+                <text x="150" y="280" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold" style={{ filter: "drop-shadow(0px 0px 4px #10b981)" }}>START</text>
               </>
             )}
             {waypoint.type === 'end' && (
               <>
-                {/* Outer highlight for visibility */}
-                <circle
-                  cx="850"
-                  cy="180"
-                  r="14"
-                  fill="white"
-                  fillOpacity="0.5"
-                />
-                <circle
-                  cx="850"
-                  cy="180"
-                  r="10"
-                  fill="#ef4444" // Danger red
-                  stroke="white"
-                  strokeWidth="2"
-                />
-                <circle
-                  cx="850"
-                  cy="180"
-                  r="16"
-                  fill="#ef4444"
-                  fillOpacity="0.3"
-                  className="animate-pulse"
-                />
-                {/* Label for better readability */}
-                <text
-                  x="850"
-                  y="210"
-                  textAnchor="middle"
-                  fill="white"
-                  fontSize="12"
-                  fontWeight="bold"
-                  style={{ filter: "drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.8))" }}
-                >
-                  END
-                </text>
+                <circle cx="850" cy="180" r="16" fill="url(#waypointGradient)" filter="url(#droneGlow)" />
+                <circle cx="850" cy="180" r="10" fill="#ef4444" stroke="white" strokeWidth="2" />
+                <text x="850" y="210" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold" style={{ filter: "drop-shadow(0px 0px 4px #ef4444)" }}>END</text>
               </>
             )}
             {waypoint.type === 'waypoint' && (
               <>
-                {/* Improved waypoints with labels */}
-                <circle
-                  cx={350 + parseInt(waypoint.id.replace('wp', '')) * 100}
-                  cy={200 - parseInt(waypoint.id.replace('wp', '')) * 20}
-                  r="8"
-                  fill="#f59e0b" // Warning orange
-                  stroke="white"
-                  strokeWidth="2"
-                />
-                <text
-                  x={350 + parseInt(waypoint.id.replace('wp', '')) * 100}
-                  y={220 - parseInt(waypoint.id.replace('wp', '')) * 20}
-                  textAnchor="middle"
-                  fill="white"
-                  fontSize="10"
-                  fontWeight="bold"
-                  style={{ filter: "drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.8))" }}
-                >
-                  {waypoint.type === 'waypoint' ? `Scan Zone ${waypoint.id.replace('wp', '')}` : waypoint.id}
-                </text>
+                <circle cx={350 + parseInt(waypoint.id.replace('wp', '')) * 100} cy={200 - parseInt(waypoint.id.replace('wp', '')) * 20} r="12" fill="url(#waypointGradient)" filter="url(#droneGlow)" />
+                <circle cx={350 + parseInt(waypoint.id.replace('wp', '')) * 100} cy={200 - parseInt(waypoint.id.replace('wp', '')) * 20} r="8" fill="#f59e0b" stroke="white" strokeWidth="2" />
+                <text x={350 + parseInt(waypoint.id.replace('wp', '')) * 100} y={220 - parseInt(waypoint.id.replace('wp', '')) * 20} textAnchor="middle" fill="white" fontSize="13" fontWeight="bold" style={{ filter: "drop-shadow(0px 0px 4px #f59e0b)" }}>{waypoint.type === 'waypoint' ? `Scan Zone ${waypoint.id.replace('wp', '')}` : waypoint.id}</text>
               </>
             )}
           </g>
         ))}
-        
         {/* No-fly zones */}
         {mapHook.noFlyZones?.map((zone) => (
           <g key={zone.id}>
-            <circle
-              cx="400"
-              cy="200"
-              r={zone.radius}
-              fill="#ef4444"
-              fillOpacity="0.2"
-              stroke="#ef4444"
-              strokeWidth="3"
-              strokeDasharray="5,5"
-            />
-            {/* Improved label with background for readability */}
-            <rect
-              x="350"
-              y="190"
-              width="100"
-              height="20"
-              rx="5"
-              fill="rgba(0,0,0,0.5)"
-            />
-            <text
-              x="400"
-              y="204"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill="white"
-              fontSize="12"
-              fontWeight="bold"
-            >
-              NO-FLY ZONE
-            </text>
+            <circle cx="400" cy="200" r={zone.radius} fill="#ef4444" fillOpacity="0.2" stroke="#ef4444" strokeWidth="3" strokeDasharray="5,5" />
+            <rect x="350" y="190" width="120" height="24" rx="8" fill="rgba(0,0,0,0.7)" />
+            <use href="#warningIcon" x="360" y="194" />
+            <text x="400" y="210" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="14" fontWeight="bold">NO-FLY ZONE</text>
           </g>
         ))}
-        
-        {/* Active drone position with improved visibility */}
-        <circle
-          cx="550"
-          cy="150"
-          r="10"
-          fill="rgba(0,0,0,0.4)"
-          stroke="white"
-          strokeWidth="1"
-        />
-        <circle
-          cx="550"
-          cy="150"
-          r="6"
-          fill="#3b82f6"
-          stroke="white"
-          strokeWidth="2"
-          className="animate-pulse"
-        />
-        <text
-          x="550"
-          y="170"
-          textAnchor="middle"
-          fill="white"
-          fontSize="10"
-          fontWeight="bold"
-          style={{ filter: "drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.8))" }}
-        >
-          ACTIVE DRONE
-        </text>
+        {/* Active drone with icon and glow */}
+        <g>
+          <use href="#droneIcon" x="550" y="150" filter="url(#droneGlow)" />
+          <text x="550" y="170" textAnchor="middle" fill="white" fontSize="13" fontWeight="bold" style={{ filter: "drop-shadow(0px 0px 4px #3b82f6)" }}>ACTIVE DRONE</text>
+        </g>
       </svg>
       
       {/* Map controls */}
@@ -256,22 +146,22 @@ export default function MapView() {
       </div>
       
       {/* Map legend */}
-      <div className="absolute bottom-4 left-4 bg-[#161a1d]/80 backdrop-blur-sm p-3 rounded-md border border-gray-700 text-xs">
-        <div className="flex items-center mb-1">
-          <div className="w-3 h-3 rounded-full bg-[#10b981] mr-2"></div>
-          <span>Starting Point</span>
+      <div className="absolute bottom-4 left-4 bg-[#161a1d]/80 backdrop-blur-md p-4 rounded-xl border border-gray-700 text-xs shadow-xl">
+        <div className="flex items-center mb-2">
+          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow mr-2"></div>
+          <span className="font-semibold text-white">Starting Point</span>
         </div>
-        <div className="flex items-center mb-1">
-          <div className="w-3 h-3 rounded-full bg-[#f59e0b] mr-2"></div>
-          <span>Waypoint</span>
+        <div className="flex items-center mb-2">
+          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 shadow mr-2"></div>
+          <span className="font-semibold text-white">Waypoint</span>
         </div>
-        <div className="flex items-center mb-1">
-          <div className="w-3 h-3 rounded-full bg-[#ef4444] mr-2"></div>
-          <span>Destination</span>
+        <div className="flex items-center mb-2">
+          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow mr-2"></div>
+          <span className="font-semibold text-white">Destination</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-[#3b82f6] mr-2"></div>
-          <span>Active Drone</span>
+          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow mr-2"></div>
+          <span className="font-semibold text-white">Active Drone</span>
         </div>
       </div>
     </div>
