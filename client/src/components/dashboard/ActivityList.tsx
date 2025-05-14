@@ -22,7 +22,15 @@ export default function ActivityList({ activities, isLoading = false }: Activity
   if (!activities || activities.length === 0) {
     return (
       <CardContent className="p-2 overflow-auto max-h-96 text-center py-8">
-        <p className="text-gray-400">No recent activities</p>
+        <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="#23272f"/>
+            <path d="M24 36c6.627 0 12-5.373 12-12S30.627 12 24 12 12 17.373 12 24s5.373 12 12 12Z" fill="#2d3748"/>
+            <path d="M24 28a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" fill="#4fd1c5"/>
+          </svg>
+          <div className="mt-2">No recent activities</div>
+          <Button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">Create Task</Button>
+        </div>
       </CardContent>
     );
   }
@@ -85,7 +93,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
         <div className="flex-grow">
           <p className="text-sm font-medium text-white">{activity.description}</p>
           <p className="text-xs text-gray-400 mt-1">
-            {formatTimestamp(activity.createdAt)}
+            {formatTimestamp(activity.createdAt ?? '')}
           </p>
         </div>
         <div className={`${statusColorClass} text-sm font-medium`}>

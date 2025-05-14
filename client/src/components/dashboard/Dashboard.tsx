@@ -12,24 +12,49 @@ import { Task } from '@shared/schema';
 
 export default function Dashboard() {
   // Fetch dashboard stats
-  const { data: stats, isLoading: isStatsLoading } = useQuery({
+  const { data: statsRaw, isLoading: isStatsLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
   });
 
   // Fetch tasks
-  const { data: tasks, isLoading: isTasksLoading } = useQuery<Task[]>({
+  const { data: tasksRaw, isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ['/api/tasks'],
   });
 
   // Fetch activities
-  const { data: activities, isLoading: isActivitiesLoading } = useQuery({
+  const { data: activitiesRaw, isLoading: isActivitiesLoading } = useQuery({
     queryKey: ['/api/activities'],
   });
 
   // Filter just active tasks for the table
-  const activeTasks = tasks?.filter(task => 
+  const activeTasks = tasksRaw?.filter(task => 
     task.status === 'in_progress' || task.status === 'on_hold'
   );
+
+  // Demo mock data
+  const demoStats = {
+    activeTasks: 2,
+    droneFleetStatus: '2/3',
+    completedTasks: 1,
+    systemHealth: '98%'
+  };
+  const demoTasks = [
+    { id: 4, name: 'Building Inspection', latitude: '37.7935', longitude: '-122.3964', duration: 30, status: 'in_progress', assignedTo: 'SR-201' },
+    { id: 3, name: 'Traffic Monitoring', latitude: '37.7833', longitude: '-122.4167', duration: 120, status: 'on_hold', assignedTo: 'HS-119' },
+    { id: 1, name: 'Riverside Monitoring', latitude: '37.7749', longitude: '-122.4194', duration: 45, status: 'in_progress', assignedTo: 'DJI-422' }
+  ];
+  const demoActivities = [
+    { id: 1, description: 'Task #339 "Night Patrol" cancelled', status: 'cancelled', createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), type: 'task_cancelled', relatedId: 339 },
+    { id: 2, description: 'New task #342 "Riverside Monitoring" created', status: 'new', createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), type: 'task_created', relatedId: 342 },
+    { id: 3, description: 'Drone HS-119 reported low battery warning', status: 'warning', createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), type: 'drone_warning', relatedId: null },
+    { id: 4, description: 'Task #341 "Downtown Survey" completed successfully', status: 'completed', createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), type: 'task_completed', relatedId: 341 },
+    { id: 5, description: 'Drone DJI-422 started emergency response task', status: 'active', createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), type: 'drone_active', relatedId: null }
+  ];
+
+  // useQuery获取数据后：
+  const stats = statsRaw ? statsRaw as any : demoStats;
+  const tasks = tasksRaw ? tasksRaw as any[] : demoTasks;
+  const activities = activitiesRaw ? activitiesRaw as any[] : demoActivities;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#181c22] to-[#23272f] p-6">
@@ -42,7 +67,7 @@ export default function Dashboard() {
           </Button>
           <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-2xl transition">
             <PlusIcon className="mr-2 h-5 w-5" />
-            新建任务
+            New Task
           </Button>
         </div>
       </div>
@@ -51,11 +76,10 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
         <StatCard
           title="Active Tasks"
-          value={isStatsLoading ? "Loading..." : stats?.activeTasks.toString() || "0"}
+          value={isStatsLoading ? "Loading..." : stats?.activeTasks?.toString() || "0"}
           icon="tasks"
           trend={{ value: "12%", direction: "up", label: "from yesterday" }}
           color="primary"
-          animate
         />
         <StatCard
           title="Drone Fleet Status"
@@ -63,15 +87,13 @@ export default function Dashboard() {
           icon="drone"
           trend={{ value: "2", direction: "warning", label: "in maintenance" }}
           color="warning"
-          animate
         />
         <StatCard
           title="Completed Tasks"
-          value={isStatsLoading ? "Loading..." : stats?.completedTasks.toString() || "0"}
+          value={isStatsLoading ? "Loading..." : stats?.completedTasks?.toString() || "0"}
           icon="check-circle"
           trend={{ value: "8%", direction: "up", label: "from last week" }}
           color="success"
-          animate
         />
         <StatCard
           title="System Health"
@@ -79,7 +101,6 @@ export default function Dashboard() {
           icon="heartbeat"
           trend={{ value: "", direction: "up", label: "All systems operational" }}
           color="success"
-          animate
         />
       </div>
 
@@ -124,7 +145,7 @@ export default function Dashboard() {
           <ActivityList activities={activities} isLoading={isActivitiesLoading} />
           <div className="p-3 border-t border-gray-800">
             <Button variant="ghost" className="w-full text-sm text-gray-400 hover:text-white">
-              查看全部活动
+              View All Activity
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </Button>
           </div>
@@ -186,7 +207,7 @@ export default function Dashboard() {
                         {/* 空状态插画和提示 */}
                         <div className="flex flex-col items-center justify-center">
                           <svg width="64" height="64" fill="none" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#23272f"/><path d="M32 44c6.627 0 12-5.373 12-12S38.627 20 32 20 20 25.373 20 32s5.373 12 12 12Z" fill="#2d3748"/><path d="M32 36a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" fill="#4fd1c5"/></svg>
-                          <div className="mt-2">暂无活跃任务，点击右上角新建任务！</div>
+                          <div className="mt-2">No active tasks. Click "New Task" to create one!</div>
                         </div>
                       </TableCell>
                     </TableRow>
